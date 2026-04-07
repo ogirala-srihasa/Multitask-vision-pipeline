@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from torch.utils.data import random_split
 import wandb
 import numpy as np
 from sklearn.metrics import f1_score
@@ -88,18 +89,28 @@ def main():
     wandb.init(project=args.wandb_project, config=args)
     #connecting GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(device)
 
     # loading data
-    train_data = OxfordIIITPetDataset(args.data, 'trainval')
-    val_data = OxfordIIITPetDataset(args.data, 'test')
+    full_train = OxfordIIITPetDataset(args.data, 'trainval')
+
+    val_size   = int(0.2 * len(full_train))
+    train_size = len(full_train) - val_size
+
+    train_data, val_data = random_split(
+        full_train,
+        [train_size, val_size],
+        generator=torch.Generator().manual_seed(6)
+    )
+
+    print(f"Train: {len(train_data)}, Val: {len(val_data)}") 
+    test_data = OxfordIIITPetDataset(args.data, 'test')
     optimal_workers = os.cpu_count()
     train_loader = DataLoader(
         train_data, 
         batch_size=args.batch_size, 
         shuffle=True, # Shuffle batches every epoch
         num_workers=optimal_workers,
-        pin_memory= True 
+        pin_memory= True
     )
     
     val_loader = DataLoader(
@@ -116,10 +127,14 @@ def main():
         loss = nn.CrossEntropyLoss()
         model.to(device=device)
         optimizer = optim.Adam(model.parameters(), lr= args.learning_rate)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode='max', patience=3, factor=0.5
+        )
         best_val_f1 = 0
         for epoch in range(args.epochs):
             train_loss, train_f1 = train_one_epoch_classification(model, train_loader, loss, optimizer, device)
             val_loss, val_f1     = validate_classification(model, val_loader, loss, device)
+            scheduler.step(val_f1)
 
             print(f"Epoch {epoch+1}: train_loss={train_loss:.4f}, val_f1={val_f1:.4f}")
 
