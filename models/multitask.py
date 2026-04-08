@@ -36,9 +36,12 @@ class MultiTaskPerceptionModel(nn.Module):
             unet_path: Path to trained unet weights.
         """
         import gdown
-        gdown.download(id="1n4q73AV9ijs5d_T3Qayrr1sGTVCbbi2p", output=classifier_path, quiet=False)
-        gdown.download(id="1FoIOcD2UUzm8JzCoj-ZuhvQbvfRmaKyM", output=localizer_path, quiet=False)
-        gdown.download(id="1SigUIOub_XJ6k0dsO_i_1zorf0LA_Yq4", output=unet_path, quiet=False)
+        # gdown.download(id="1n4q73AV9ijs5d_T3Qayrr1sGTVCbbi2p", output=classifier_path, quiet=False)
+        # gdown.download(id="1FoIOcD2UUzm8JzCoj-ZuhvQbvfRmaKyM", output=localizer_path, quiet=False)
+        # gdown.download(id="1SigUIOub_XJ6k0dsO_i_1zorf0LA_Yq4", output=unet_path, quiet=False)
+        gdown.download(id="1UlHUdhT65SM6Q-gnJW1U_aUvok5SfxqY", output=classifier_path, quiet=False)
+        gdown.download(id="1KJgHl-nqLaQZL2ZDtUnRbAqyGQ_ZxCoS", output=localizer_path, quiet=False)
+        gdown.download(id="1EXLixl-KhX7hitpn7APVuu82b3k_8Pj2", output=unet_path, quiet=False)
         
         super().__init__()
 
