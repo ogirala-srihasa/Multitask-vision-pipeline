@@ -344,6 +344,10 @@ def main():
             model.VGGhead.load_state_dict(encoder_state)
             print("Loaded encoder weights from classifier.pth ")
             model.to(device=device)
+            # for param in model.VGGhead.parameters():
+            #     param.requires_grad = False
+            # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+            # optimizer = optim.Adam(trainable_params, lr=args.learning_rate)         
             optimizer = optim.Adam([
                 {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
                 {"params": model.layer1.parameters(), "lr": args.learning_rate},
@@ -404,7 +408,11 @@ def main():
                  list(model.up5.parameters()) + list(model.dec5.parameters()) + \
                  list(model.outConv.parameters()
             )
-
+            
+            # for param in model.VGGhead.parameters():
+            #     param.requires_grad = False
+            # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+            # optimizer = optim.Adam(trainable_params, lr=args.learning_rate) 
             optimizer = optim.Adam([
                 {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
                 {"params": decoder_params, "lr": args.learning_rate},
