@@ -24,7 +24,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def __init__(self, num_breeds: int = 37, seg_classes: int = 3, in_channels: int = 3, classifier_path: str = "classifier.pth", localizer_path: str = "localizer.pth", unet_path: str = "unet.pth",batch_norm: bool = True, dropout_p = 0.5, encoder_backbone = 'classifier'):
+    def __init__(self, num_breeds: int = 37, seg_classes: int = 3, in_channels: int = 3, classifier_path: str = "classifier.pth", localizer_path: str = "localizer.pth", unet_path: str = "unet.pth",batch_norm: bool = True, dropout_p = 0.5, encoder_backbone = 'localizer'):
         """
         Initialize the shared backbone/heads using these trained weights.
         Args:
