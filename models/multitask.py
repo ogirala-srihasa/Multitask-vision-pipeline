@@ -35,6 +35,7 @@ class MultiTaskPerceptionModel(nn.Module):
             localizer_path: Path to trained localizer weights.
             unet_path: Path to trained unet weights.
         """
+        super().__init__()
         import gdown
         # ---- set 1 -----
         # gdown.download(id="1n4q73AV9ijs5d_T3Qayrr1sGTVCbbi2p", output=classifier_path, quiet=False)
@@ -42,17 +43,23 @@ class MultiTaskPerceptionModel(nn.Module):
         # gdown.download(id="1SigUIOub_XJ6k0dsO_i_1zorf0LA_Yq4", output=unet_path, quiet=False)
 
         # ----- set 2 -----
-        gdown.download(id="1UlHUdhT65SM6Q-gnJW1U_aUvok5SfxqY", output=classifier_path, quiet=False)
-        gdown.download(id="1KJgHl-nqLaQZL2ZDtUnRbAqyGQ_ZxCoS", output=localizer_path, quiet=False)
-        gdown.download(id="1EXLixl-KhX7hitpn7APVuu82b3k_8Pj2", output=unet_path, quiet=False)
+        # gdown.download(id="1UlHUdhT65SM6Q-gnJW1U_aUvok5SfxqY", output=classifier_path, quiet=False)
+        # gdown.download(id="1KJgHl-nqLaQZL2ZDtUnRbAqyGQ_ZxCoS", output=localizer_path, quiet=False)
+        # gdown.download(id="1EXLixl-KhX7hitpn7APVuu82b3k_8Pj2", output=unet_path, quiet=False)
 
         # ---- set 3 ----
         # gdown.download(id="1MHl6nIjHZroGB79A0oxjqp1vZML5j6Ls", output=classifier_path, quiet=False)
         # gdown.download(id="13F0Ykb3qEp0Br_Nps0R_6NReNhjAuOsj", output=localizer_path, quiet=False)
         # gdown.download(id="1oJcxfEdpr-ppXXmHrYwhPjMMtb-G2Sko", output=unet_path, quiet=False)
 
+        # --- set 4 ----
+        gdown.download(id="1n4q73AV9ijs5d_T3Qayrr1sGTVCbbi2p", output=classifier_path, quiet=False)
+        gdown.download(id="1IryZXscys6zUgVXGKIflvw-MekpE-6dH", output=localizer_path, quiet=False)
+        gdown.download(id="lqNpDYWZjhtwaaAHyLhyUInGQsd0l7dS", output=unet_path, quiet=False)
+
+
         
-        super().__init__()
+        
 
         #shared Encoder
         self.VGGhead = VGG11(in_channels= in_channels, batch_norm= batch_norm)
