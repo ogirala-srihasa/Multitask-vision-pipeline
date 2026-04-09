@@ -24,7 +24,7 @@ class MultiTaskPerceptionModel(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def __init__(self, num_breeds: int = 37, seg_classes: int = 3, in_channels: int = 3, classifier_path: str = "classifier.pth", localizer_path: str = "localizer.pth", unet_path: str = "unet.pth",batch_norm: bool = True, dropout_p = 0.5, encoder_backbone = 'localizer'):
+    def __init__(self, num_breeds: int = 37, seg_classes: int = 3, in_channels: int = 3, classifier_path: str = "classifier.pth", localizer_path: str = "localizer.pth", unet_path: str = "unet.pth",batch_norm: bool = True, dropout_p = 0.5, encoder_backbone = 'classifier'):
         """
         Initialize the shared backbone/heads using these trained weights.
         Args:
@@ -42,14 +42,14 @@ class MultiTaskPerceptionModel(nn.Module):
         # gdown.download(id="1SigUIOub_XJ6k0dsO_i_1zorf0LA_Yq4", output=unet_path, quiet=False)
 
         # ----- set 2 -----
-        # gdown.download(id="1UlHUdhT65SM6Q-gnJW1U_aUvok5SfxqY", output=classifier_path, quiet=False)
-        # gdown.download(id="1KJgHl-nqLaQZL2ZDtUnRbAqyGQ_ZxCoS", output=localizer_path, quiet=False)
-        # gdown.download(id="1EXLixl-KhX7hitpn7APVuu82b3k_8Pj2", output=unet_path, quiet=False)
+        gdown.download(id="1UlHUdhT65SM6Q-gnJW1U_aUvok5SfxqY", output=classifier_path, quiet=False)
+        gdown.download(id="1KJgHl-nqLaQZL2ZDtUnRbAqyGQ_ZxCoS", output=localizer_path, quiet=False)
+        gdown.download(id="1EXLixl-KhX7hitpn7APVuu82b3k_8Pj2", output=unet_path, quiet=False)
 
         # ---- set 3 ----
-        gdown.download(id="1MHl6nIjHZroGB79A0oxjqp1vZML5j6Ls", output=classifier_path, quiet=False)
-        gdown.download(id="13F0Ykb3qEp0Br_Nps0R_6NReNhjAuOsj", output=localizer_path, quiet=False)
-        gdown.download(id="1oJcxfEdpr-ppXXmHrYwhPjMMtb-G2Sko", output=unet_path, quiet=False)
+        # gdown.download(id="1MHl6nIjHZroGB79A0oxjqp1vZML5j6Ls", output=classifier_path, quiet=False)
+        # gdown.download(id="13F0Ykb3qEp0Br_Nps0R_6NReNhjAuOsj", output=localizer_path, quiet=False)
+        # gdown.download(id="1oJcxfEdpr-ppXXmHrYwhPjMMtb-G2Sko", output=unet_path, quiet=False)
 
         
         super().__init__()
