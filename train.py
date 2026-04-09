@@ -143,7 +143,7 @@ def validate_classification(model, loader, criterion, device):
     f1 = f1_score(all_labels, all_preds, average='macro')
     return avg_loss, f1
 
-def train_one_epoch_localization(model, loader, mse_loss, mean_iou_loss, sample_iou_loss, optimizer, device):
+def train_one_epoch_localization(model, loader, L1_loss, mean_iou_loss, sample_iou_loss, optimizer, device):
     model.train()
     total_loss = 0.0
     total_iou = 0.0
@@ -156,9 +156,9 @@ def train_one_epoch_localization(model, loader, mse_loss, mean_iou_loss, sample_
         pred_boxes = model(images)       # [B, 4]
 
         # combined loss
-        loss_mse = mse_loss(pred_boxes, bboxes)
+        loss_l1 = L1_loss(pred_boxes, bboxes)
         loss_iou = mean_iou_loss(pred_boxes, bboxes)
-        loss = loss_mse + loss_iou
+        loss = loss_l1 + loss_iou
 
         loss.backward()
         optimizer.step()
@@ -172,7 +172,7 @@ def train_one_epoch_localization(model, loader, mse_loss, mean_iou_loss, sample_
     avg_iou  = total_iou / len(loader)
     return avg_loss, avg_iou
 
-def validate_localization(model, loader,mse_loss,mean_iou_loss,sample_iou_loss,device):
+def validate_localization(model, loader,L1_loss,mean_iou_loss,sample_iou_loss,device):
     model.eval()
     total_loss = 0.0
     total_iou = 0.0 
@@ -184,9 +184,9 @@ def validate_localization(model, loader,mse_loss,mean_iou_loss,sample_iou_loss,d
             pred_boxes = model(images)       # [B, 4]
 
             # combined loss
-            loss_mse = mse_loss(pred_boxes, bboxes)
+            loss_l1 = L1_loss(pred_boxes, bboxes)
             loss_iou = mean_iou_loss(pred_boxes, bboxes)
-            loss = loss_mse + loss_iou
+            loss = loss_l1 + loss_iou
 
             total_loss += loss.item()
             per_sample_iou = 1.0 - sample_iou_loss(pred_boxes.detach(), bboxes) 
@@ -330,7 +330,7 @@ def main():
         model = VGG11Localizer(dropout_p=args.dropout, batch_norm=batch_norm)
         iouloss_none = IoULoss(reduction= 'none')
         iouloss_mean = IoULoss(reduction='mean')
-        mseloss = nn.MSELoss()
+        L1loss = nn.L1Loss()
 
         # transfer learning
         if os.path.exists("checkpoints/classifier.pth"):
@@ -344,16 +344,16 @@ def main():
             model.VGGhead.load_state_dict(encoder_state)
             print("Loaded encoder weights from classifier.pth ")
             model.to(device=device)
-            # for param in model.VGGhead.parameters():
-            #     param.requires_grad = False
-            # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-            # optimizer = optim.Adam(trainable_params, lr=args.learning_rate)         
-            optimizer = optim.Adam([
-                {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
-                {"params": model.layer1.parameters(), "lr": args.learning_rate},
-                {"params": model.layer2.parameters(), "lr": args.learning_rate},
-                {"params": model.layer3.parameters(), "lr": args.learning_rate},
-            ])
+            for param in model.VGGhead.parameters():
+                param.requires_grad = False
+            trainable_params = filter(lambda p: p.requires_grad, model.parameters())
+            optimizer = optim.Adam(trainable_params, lr=args.learning_rate)         
+            # optimizer = optim.Adam([
+            #     {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
+            #     {"params": model.layer1.parameters(), "lr": args.learning_rate},
+            #     {"params": model.layer2.parameters(), "lr": args.learning_rate},
+            #     {"params": model.layer3.parameters(), "lr": args.learning_rate},
+            # ])
         else:
             print("No classifier checkpoint found, training from scratch")
             model.to(device=device)
@@ -363,8 +363,8 @@ def main():
             optimizer, mode='max', patience=3, factor=0.5
         )
         for epoch in range(args.epochs):
-            train_loss, train_iou = train_one_epoch_localization(model, train_loader,mse_loss= mseloss, mean_iou_loss=iouloss_mean,sample_iou_loss=iouloss_none, optimizer= optimizer,device= device)
-            val_loss, val_iou     = validate_localization(model, val_loader, mse_loss = mseloss,device= device, mean_iou_loss = iouloss_mean, sample_iou_loss= iouloss_none)
+            train_loss, train_iou = train_one_epoch_localization(model, train_loader,L1_loss= L1loss, mean_iou_loss=iouloss_mean,sample_iou_loss=iouloss_none, optimizer= optimizer,device= device)
+            val_loss, val_iou     = validate_localization(model, val_loader, L1_loss = L1loss,device= device, mean_iou_loss = iouloss_mean, sample_iou_loss= iouloss_none)
             scheduler.step(val_iou)
             print(f"Epoch {epoch+1}: train_loss={train_loss:.4f}, val_iou={val_iou:.4f}")
 
@@ -408,7 +408,7 @@ def main():
                  list(model.up5.parameters()) + list(model.dec5.parameters()) + \
                  list(model.outConv.parameters()
             )
-            
+
             # for param in model.VGGhead.parameters():
             #     param.requires_grad = False
             # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
