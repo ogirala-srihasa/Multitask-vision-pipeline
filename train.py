@@ -89,6 +89,7 @@ def parse_arguments():
     parser.add_argument('-bn', '--batch_norm', type = str ,default= 'true',choices=['true','false'] ,help='   Batch Normalization ')
     parser.add_argument('-p', '--dropout', type= float, default= 0.5, help= 'dropout rate')
     parser.add_argument('-wp', '--wandb_project', type=str, default='da6401')
+    parser.add_argument('--freeze_strategy', type=str, default='finetune',choices=['frozen', 'partial', 'full', 'finetune'])
 
 
     
@@ -236,9 +237,9 @@ def validate_segmentation(model, loader,ce_loss,device):
             pred_mask = model(images)       
 
             # combined loss
-            loss_mse = ce_loss(pred_mask, masks)
+            loss_ce = ce_loss(pred_mask, masks)
             loss_iou = dice_loss(pred_mask, masks)
-            loss = loss_mse + loss_iou
+            loss = loss_ce + loss_iou
 
             total_loss += loss.item()
             total_dice_score += dice_score(pred_mask,masks).item()
@@ -251,7 +252,7 @@ def main():
     #collecting CLI args
     args = parse_arguments()
     #initiating wandb
-    wandb.init(project=args.wandb_project, config=args)
+    wandb.init(project=args.wandb_project,name=f"{args.task}-{args.freeze_strategy}-dropout{args.dropout}-bn{args.batch_norm}", config=args)
     #connecting GPU
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -401,22 +402,36 @@ def main():
             model.VGGhead.load_state_dict(encoder_state)
             print("Loaded encoder weights from classifier.pth ")
             model.to(device=device)
-            decoder_params = list(model.up1.parameters()) + list(model.dec1.parameters()) + \
-                 list(model.up2.parameters()) + list(model.dec2.parameters()) + \
-                 list(model.up3.parameters()) + list(model.dec3.parameters()) + \
-                 list(model.up4.parameters()) + list(model.dec4.parameters()) + \
-                 list(model.up5.parameters()) + list(model.dec5.parameters()) + \
-                 list(model.outConv.parameters()
-            )
+            # # decoder_params = list(model.up1.parameters()) + list(model.dec1.parameters()) + \
+            # #      list(model.up2.parameters()) + list(model.dec2.parameters()) + \
+            # #      list(model.up3.parameters()) + list(model.dec3.parameters()) + \
+            # #      list(model.up4.parameters()) + list(model.dec4.parameters()) + \
+            # #      list(model.up5.parameters()) + list(model.dec5.parameters()) + \
+            # #      list(model.outConv.parameters()
+            # # )
 
             # for param in model.VGGhead.parameters():
             #     param.requires_grad = False
             # trainable_params = filter(lambda p: p.requires_grad, model.parameters())
             # optimizer = optim.Adam(trainable_params, lr=args.learning_rate) 
-            optimizer = optim.Adam([
-                {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
-                {"params": decoder_params, "lr": args.learning_rate},
-            ])
+            # # optimizer = optim.Adam([
+            # #     {"params": model.VGGhead.parameters(), "lr": args.learning_rate * 0.1},
+            # #     {"params": decoder_params, "lr": args.learning_rate},
+            # # ])
+            if args.freeze_strategy == 'frozen':
+                for param in model.VGGhead.parameters():
+                    param.requires_grad = False      # freeze all encoder
+            elif args.freeze_strategy == 'partial':
+                for param in model.VGGhead.parameters():
+                    param.requires_grad = False      # freeze everything
+                for param in model.VGGhead.block4.parameters():
+                    param.requires_grad = True       # unfreeze last 2 blocks
+                for param in model.VGGhead.block5.parameters():
+                    param.requires_grad = True
+            optimizer = optim.Adam(
+                filter(lambda p: p.requires_grad, model.parameters()),
+                lr=args.learning_rate
+            )
         else:
             print("No classifier checkpoint found, training from scratch")
             model.to(device=device)
